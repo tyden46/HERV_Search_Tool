@@ -5,7 +5,7 @@ library(rentrez)
 #You can download HERV annotation at:
 #https://github.com/mlbendall/telescope_annotation_db/raw/master/builds/HERV_rmsk.hg38.v2/transcripts.gtf 
 HERVtranscripts=read.gtf("transcripts.gtf") #Matthew's HERV annotation
-res.sig=read.csv("AlzheimersHervs-PRJEB28518.csv")
+res.sig=read.csv("AlzheimersHervs-PRJEB28518.csv", row.names = 1)
 #Step 1 : Find Genomic Coordinates for HERVs
 tableExists=FALSE #Create table first, then rbind to it
 for(x in rownames(res.sig)){ #Iterate through sig HERVs
