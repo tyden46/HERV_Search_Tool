@@ -30,9 +30,9 @@ for(x in rownames(res.sig)){ #Iterate through sig HERVs
 }
 
 #Search for genes in HERV locations using biomaRt
-mart <- useEnsembl(biomart = "ensembl", 
-                   dataset = "hsapiens_gene_ensembl", 
-                   mirror = "www")
+myMart <- useMart(biomart = "ensembl", 
+                  host="www.ensembl.org",
+                  dataset = "hsapiens_gene_ensembl") 
 attributes <- c("ensembl_gene_id","hgnc_symbol") #We could fetch more attributes
 filters <- c("chromosome_name","start","end")
 listOfGenes=c()
@@ -53,28 +53,44 @@ for(x in 1:length(myTable$gene_id)){
 }
 #Now that we have a query list we can search using biomaRt
 tableExists=FALSE
-for(x in 1:223){
+#for(x in 1:length(row.names(myTable))){
+for(x in 1:10){
+  print(paste("Searching for gene number", x))#Acts as a counter so you can see progress, this loop takes a while
   #We pass in each query to get the attributes we want
-  theseGenes <- getBM(attributes=attributes,
-                      filters=filters,
-                      values=list(listOfValues[[x]][1],
-                                  listOfValues[[x]][2],
-                                  listOfValues[[x]][3]),
-                      mart=mart)
+  foundGenes=FALSE
+  extendFactor=0
+  while(foundGenes==FALSE && extendFactor<10000){
+    chrom=as.character(listOfValues[[x]][1])
+    startPos=start = as.character(as.numeric(as.character(listOfValues[[x]][2]))-extendFactor)
+    endPos=start = as.character(as.numeric(as.character(listOfValues[[x]][3]))+extendFactor)
+    theseGenes <- getBM(attributes=attributes,
+                        filters=filters,
+                        values=list(chrom,
+                                    startPos,
+                                    endPos),
+                        mart=myMart)
+    if(length(theseGenes$ensembl_gene_id)>0){
+      foundGenes=TRUE
+    }else{
+      print("Extending search space")
+      extendFactor=extendFactor+500
+    }
+  }
   if(tableExists){#If table exists, add entry
     geneTable=rbind(geneTable, theseGenes)    
   }else{#If table doesn't exist yet, make it
     geneTable=theseGenes
     tableExists=TRUE
   }
-  print(x)#Acts as a counter so you can see progress, this loop takes a while
+  foundGenes=FALSE
 }
 #Now that we have a list of genes we can search pubmed
 for(x in geneTable$hgnc_symbol){
   if(x!= "" && !is.na(x)){#If the gene has a symbol
     #We could cast a wider net here by searching the abstracts as well as title
     #We could search for "brain" or "neur*"
-    myTerm=paste("(", x, "[Title]) AND (Alzheimer's[Title])", sep="")
+    myTerm=paste("(", x, "[Title/Abstract]) AND ((Alzheimer's[Title/Abstract]) OR (neur*[Title/Abstract]) OR (brain[Title/Abstract]))", sep="")
+    #myTerm=paste("(", x, "[Title]) AND (Alzheimer's[Title])", sep="")
     search <- entrez_search(db="pubmed",
                             term=myTerm)
     #If results are found, print how many papers match the search
