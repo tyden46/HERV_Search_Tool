@@ -59,7 +59,7 @@ for(x in 1:length(myTable$gene_id)){
 }
 #Now that we have a query list we can search using biomaRt
 tableExists=FALSE
-for(x in 152:length(row.names(myTable))){
+for(x in 1:length(row.names(myTable))){
 #for(x in 1:3){
   print(paste("Searching for gene number", x))#Acts as a counter so you can see progress, this loop takes a while
   #We pass in each query to get the attributes we want
